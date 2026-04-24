@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LUMEN Study Hub</title>
+<link rel="icon" href="https://i.imgur.com/GV5J9mB.png">
+
+<style>
+:root{
+  --bg:#0f1116;
+  --panel:rgba(255,255,255,0.06);
+  --panel2:rgba(255,255,255,0.09);
+  --text:#e6e6e6;
+  --muted:#9aa0a6;
+  --accent:#3b82f6;
+  --radius:14px;
+}
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:system-ui, sans-serif;
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  height:100vh;
+  display:flex;
+  overflow:hidden;
+}
+
+/* SIDEBAR */
+.sidebar{
+  width:300px;
+  background:var(--panel);
+  backdrop-filter: blur(20px);
+  border-right:1px solid rgba(255,255,255,0.08);
+  padding:16px;
+  overflow:auto;
+}
+
+.logo{
+  font-size:22px;
+  font-weight:700;
+  color:var(--accent);
+  margin-bottom:10px;
+}
+
+.group{
+  margin-top:14px;
+}
+
+.group-title{
+  font-size:11px;
+  color:var(--muted);
+  margin-bottom:8px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+
+.nav-btn{
+  width:100%;
+  padding:12px;
+  margin-bottom:8px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:12px;
+  color:var(--text);
+  text-align:left;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.nav-btn:hover{
+  transform:translateX(4px);
+  background:rgba(255,255,255,0.08);
+}
+
+/* MAIN */
+.main{
+  flex:1;
+  padding:20px;
+  overflow:auto;
+}
+
+.section{
+  display:none;
+  animation:fade .25s ease;
+}
+
+.section.active{
+  display:block;
+}
+
+@keyframes fade{
+  from{opacity:0; transform:translateY(10px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+.card{
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(18px);
+  border-radius:var(--radius);
+  padding:16px;
+  margin-bottom:15px;
+}
+
+/* INPUTS */
+input, textarea, select{
+  width:100%;
+  padding:10px;
+  margin-top:8px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.05);
+  color:var(--text);
+  outline:none;
+}
+
+.btn{
+  background:var(--accent);
+  border:none;
+  padding:10px 14px;
+  border-radius:10px;
+  color:white;
+  cursor:pointer;
+  margin-top:10px;
+  transition:0.2s;
+}
+
+.btn:hover{
+  transform:scale(1.03);
+  filter:brightness(1.1);
+}
+
+/* TASK */
+.task{
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  margin-top:8px;
+  border-radius:10px;
+  background:rgba(255,255,255,0.05);
+}
+
+.task.done{
+  opacity:0.5;
+  text-decoration:line-through;
+}
+
+/* TIMER */
+.timer{
+  font-size:56px;
+  text-align:center;
+  margin:20px 0;
+}
+
+/* FLOATING TIMER */
+.floating{
+  position:fixed;
+  bottom:18px;
+  right:18px;
+  padding:10px 14px;
+  border-radius:12px;
+  background:rgba(0,0,0,0.6);
+  backdrop-filter: blur(12px);
+  border:1px solid rgba(255,255,255,0.1);
+  display:none;
+  font-size:14px;
+}
+
+/* CONTROLS */
+.controls{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+}
+</style>
+</head>
+
+<body>
+
+<!-- FLOATING TIMER -->
+<div class="floating" id="floatingTimer">25:00</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">LUMEN</div>
+
+  <div class="group">
+    <div class="group-title">Principal</div>
+    <button class="nav-btn" onclick="show('dashboard')">Dashboard</button>
+    <button class="nav-btn" onclick="show('tasks')">Tareas</button>
+    <button class="nav-btn" onclick="show('timer')">Temporizador</button>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Herramientas</div>
+    <button class="nav-btn" onclick="show('notes')">Notas</button>
+    <button class="nav-btn" onclick="show('stats')">Stats</button>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Sistema</div>
+    <button class="nav-btn" onclick="show('settings')">Settings</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="section active">
+  <div class="card">
+    <h2>Dashboard</h2>
+    <p>Productividad general del sistema</p>
+  </div>
+</div>
+
+<!-- TASKS -->
+<div id="tasks" class="section">
+  <div class="card">
+    <h2>Tareas</h2>
+    <input id="taskInput" placeholder="Nueva tarea..."/>
+    <button class="btn" onclick="addTask()">Agregar</button>
+    <div id="taskList"></div>
+  </div>
+</div>
+
+<!-- TIMER -->
+<div id="timer" class="section">
+  <div class="card">
+    <h2>Temporizador</h2>
+    <div class="timer" id="time">25:00</div>
+
+    <div class="controls">
+      <button class="btn" onclick="start()">Start</button>
+      <button class="btn" onclick="pause()">Pause</button>
+      <button class="btn" onclick="stop()">Stop</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTES -->
+<div id="notes" class="section">
+  <div class="card">
+    <h2>Notas</h2>
+    <textarea id="note"></textarea>
+    <button class="btn" onclick="saveNote()">Guardar</button>
+  </div>
+</div>
+
+<!-- STATS -->
+<div id="stats" class="section">
+  <div class="card">
+    <h2>Stats</h2>
+    <div id="statsBox"></div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings" class="section">
+  <div class="card">
+    <h2>Settings</h2>
+
+    <label>Color acento</label>
+    <input type="color" id="accent"/>
+
+    <label>Minutos timer</label>
+    <input type="number" id="minutes" value="25"/>
+
+    <button class="btn" onclick="saveSettings()">Guardar</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+
+let tasks = JSON.parse(localStorage.getItem("tasks")||"[]");
+let settings = JSON.parse(localStorage.getItem("settings")||"{}");
+
+let time = (settings.minutes||25)*60;
+let running=false;
+let interval;
+
+/* NAV */
+function show(id){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+
+  floatingLogic();
+}
+
+/* TASKS */
+function addTask(){
+  tasks.push({text:taskInput.value,done:false});
+  taskInput.value="";
+  render();
+  save();
+}
+
+function render(){
+  let box=document.getElementById("taskList");
+  box.innerHTML="";
+  tasks.forEach((t,i)=>{
+    let div=document.createElement("div");
+    div.className="task "+(t.done?"done":"");
+    div.innerHTML=`
+      <span onclick="toggle(${i})">${t.text}</span>
+      <button onclick="del(${i})">X</button>
+    `;
+    box.appendChild(div);
+  });
+}
+
+function toggle(i){tasks[i].done=!tasks[i].done;render();save();}
+function del(i){tasks.splice(i,1);render();save();}
+function save(){localStorage.setItem("tasks",JSON.stringify(tasks));}
+
+/* TIMER */
+function update(){
+  let m=Math.floor(time/60);
+  let s=time%60;
+  let txt=`${m}:${s.toString().padStart(2,"0")}`;
+  timeEl().innerText=txt;
+  floating().innerText=txt;
+}
+
+function start(){
+  if(running)return;
+  running=true;
+
+  interval=setInterval(()=>{
+    if(time>0){
+      time--;
+      update();
+      floatingLogic();
+    }else{
+      stop();
+      beep();
+    }
+  },1000);
+}
+
+function pause(){
+  running=false;
+  clearInterval(interval);
+}
+
+function stop(){
+  running=false;
+  clearInterval(interval);
+  time=(settings.minutes||25)*60;
+  update();
+}
+
+/* FLOATING */
+function floating(){
+  return document.getElementById("floatingTimer");
+}
+
+function timeEl(){
+  return document.getElementById("time");
+}
+
+function floatingLogic(){
+  let sec=document.querySelector(".section.active").id;
+  if(running && sec!=="timer"){
+    floating().style.display="block";
+  }else{
+    floating().style.display="none";
+  }
+}
+
+/* SOUND */
+function beep(){
+  let ctx=new AudioContext();
+  let o=ctx.createOscillator();
+  let g=ctx.createGain();
+
+  o.connect(g);g.connect(ctx.destination);
+  o.frequency.value=800;
+
+  o.start();
+  g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+1);
+}
+
+/* SETTINGS */
+function saveSettings(){
+  settings={
+    accent:accent.value,
+    minutes:Number(minutes.value)
+  };
+
+  document.documentElement.style.setProperty("--accent",settings.accent);
+  localStorage.setItem("settings",JSON.stringify(settings));
+
+  time=settings.minutes*60;
+  update();
+}
+
+/* INIT */
+if(settings.accent){
+  document.documentElement.style.setProperty("--accent",settings.accent);
+}
+
+render();
+update();
+
+</script>
+
+</body>
+</html>
